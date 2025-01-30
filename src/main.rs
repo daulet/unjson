@@ -77,8 +77,11 @@ fn main() -> io::Result<()> {
 
     for line in io::stdin().lines() {
         let line = line?;
-        let json: serde_json::Value = serde_json::from_str(&line)?;
-        flatten(&highlight_keys, &json, 2);
+        if let Ok(json) = serde_json::from_str(&line) {
+            flatten(&highlight_keys, &json, 2);
+        } else {
+            println!("{}", line);
+        }
     }
     Ok(())
 }
