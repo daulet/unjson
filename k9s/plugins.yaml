@@ -1,0 +1,13 @@
+plugins:
+  unjson-logs:
+    shortCut: Ctrl-L
+    description: "unjson pod logs"
+    scopes:
+    - containers
+    command: kubectl-unjson
+    background: false
+    args:
+    - $CONTEXT
+    - $NAMESPACE
+    - $POD
+    - $NAME
