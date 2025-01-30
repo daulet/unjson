@@ -1,0 +1,8 @@
+[package]
+name = "unjson"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+colored = "3.0.0"
+serde_json = "1.0"
