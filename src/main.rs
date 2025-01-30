@@ -19,7 +19,9 @@ fn flatten(
     for key in SKIP_KEYS {
         if map.contains_key(key) {
             let mut val: &str = &map[key];
-            val = val.get(1..val.len() - 1).unwrap_or(val);
+            if val.starts_with('"') && val.ends_with('"') {
+                val = val.get(1..val.len() - 1).unwrap_or(val);
+            }
             if let Some(color) = highlight_keys.get(key) {
                 print!(
                     "{}{}",
@@ -34,7 +36,9 @@ fn flatten(
     }
     for key in keys {
         let mut val: &str = &map[key];
-        val = val.get(1..val.len() - 1).unwrap_or(val);
+        if val.starts_with('"') && val.ends_with('"') {
+            val = val.get(1..val.len() - 1).unwrap_or(val);
+        }
         if let Some(color) = highlight_keys.get(key.as_str()) {
             print!(
                 "{}{}={}",
