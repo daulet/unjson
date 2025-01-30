@@ -66,7 +66,13 @@ fn walk_json(json: &serde_json::Value) -> BTreeMap<String, String> {
             map.extend(walk_json(value));
         } else {
             // TODO escape string brackets
-            map.insert(key.to_string(), value.to_string());
+            map.insert(
+                key.to_string(),
+                value
+                    .to_string()
+                    .replace("\\n", "\n")
+                    .replace("\\\"", "\""),
+            );
         }
     }
     map
