@@ -1,13 +1,29 @@
-use colored::*;
+use colored;
+use colored::Colorize;
 use std::{collections::BTreeMap, io};
 
 const SKIP_KEYS: [&str; 2] = ["timestamp", "level"];
 
-fn flatten(
-    highlight_keys: &BTreeMap<&str, colored::Color>,
-    json: &serde_json::Value,
-    indent: usize,
-) {
+enum Highlight {
+    Color(colored::Color),
+    LogLevel,
+}
+
+impl Highlight {
+    fn output(&self, s: &str) -> String {
+        match self {
+            Highlight::Color(color) => s.color(*color).to_string(),
+            Highlight::LogLevel => match s.to_lowercase().as_str() {
+                "info" => s.color(colored::Color::Green).to_string(),
+                "warn" => s.color(colored::Color::Yellow).to_string(),
+                "error" => s.color(colored::Color::Red).to_string(),
+                _ => s.to_string(),
+            },
+        }
+    }
+}
+
+fn flatten(highlight_keys: &BTreeMap<&str, Highlight>, json: &serde_json::Value, indent: usize) {
     let map = walk_json(json);
     let mut keys = map
         .keys()
@@ -22,11 +38,11 @@ fn flatten(
             if val.starts_with('"') && val.ends_with('"') {
                 val = val.get(1..val.len() - 1).unwrap_or(val);
             }
-            if let Some(color) = highlight_keys.get(key) {
+            if let Some(h) = highlight_keys.get(key) {
                 print!(
                     "{}{}",
                     " ".repeat(if first { 0 } else { indent }),
-                    val.color(*color)
+                    h.output(val)
                 );
             } else {
                 print!("{}{}", " ".repeat(if first { 0 } else { indent }), val);
@@ -39,12 +55,12 @@ fn flatten(
         if val.starts_with('"') && val.ends_with('"') {
             val = val.get(1..val.len() - 1).unwrap_or(val);
         }
-        if let Some(color) = highlight_keys.get(key.as_str()) {
+        if let Some(h) = highlight_keys.get(key.as_str()) {
             print!(
                 "{}{}={}",
                 " ".repeat(if first { 0 } else { indent }),
                 key,
-                val.color(*color)
+                h.output(val)
             );
         } else {
             print!(
@@ -68,10 +84,7 @@ fn walk_json(json: &serde_json::Value) -> BTreeMap<String, String> {
             // TODO escape string brackets
             map.insert(
                 key.to_string(),
-                value
-                    .to_string()
-                    .replace("\\n", "\n")
-                    .replace("\\\"", "\""),
+                value.to_string().replace("\\n", "\n").replace("\\\"", "\""),
             );
         }
     }
@@ -79,11 +92,12 @@ fn walk_json(json: &serde_json::Value) -> BTreeMap<String, String> {
 }
 
 fn main() -> io::Result<()> {
-    // TODO special mode for level to change color based on value
-    let highlight_keys: BTreeMap<&str, colored::Color> =
-        [("level", Color::Green), ("node", Color::BrightBlue)]
-            .into_iter()
-            .collect();
+    let highlight_keys: BTreeMap<&str, Highlight> = [
+        ("level", Highlight::LogLevel),
+        ("node", Highlight::Color(colored::Color::BrightBlue)),
+    ]
+    .into_iter()
+    .collect();
 
     for line in io::stdin().lines() {
         let line = line?;
