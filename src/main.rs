@@ -1,6 +1,6 @@
 use colored;
 use colored::Colorize;
-use std::{collections::BTreeMap, io};
+use std::{collections::BTreeMap, env::args, io};
 
 const SKIP_KEYS: [&str; 2] = ["timestamp", "level"];
 
@@ -92,6 +92,11 @@ fn walk_json(json: &serde_json::Value) -> BTreeMap<String, String> {
 }
 
 fn main() -> io::Result<()> {
+    if args().any(|arg| arg == "--version") {
+        println!("{}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
     let highlight_keys: BTreeMap<&str, Highlight> = [
         ("level", Highlight::LogLevel),
         ("node", Highlight::Color(colored::Color::BrightBlue)),
