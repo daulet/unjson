@@ -1,5 +1,9 @@
 use colored::Colorize;
-use std::{collections::BTreeMap, env::args, io};
+use std::{
+    collections::BTreeMap,
+    env::args,
+    io::{self, IsTerminal},
+};
 
 const SKIP_KEYS: [&str; 2] = ["timestamp", "level"];
 
@@ -31,6 +35,16 @@ fn parse_cli_command(argv: &[String]) -> Result<CliCommand, String> {
             usage(bin)
         )),
         [] => Ok(CliCommand::Run),
+    }
+}
+
+fn require_piped_input(stdin_is_terminal: bool, bin: &str) -> Result<(), String> {
+    if stdin_is_terminal {
+        Err(format!(
+            "No input detected on stdin.\n\nPipe or redirect input, for example:\n  kubectl logs POD --tail 100 | {bin}"
+        ))
+    } else {
+        Ok(())
     }
 }
 
@@ -123,6 +137,7 @@ fn walk_json(json: &serde_json::Value) -> BTreeMap<String, String> {
 
 fn main() -> io::Result<()> {
     let argv = args().collect::<Vec<_>>();
+    let bin = argv.first().map_or("unjson", String::as_str);
     match parse_cli_command(&argv) {
         Ok(CliCommand::Version) => {
             println!("{}", runtime_version());
@@ -133,6 +148,10 @@ fn main() -> io::Result<()> {
             eprintln!("{message}");
             std::process::exit(2);
         }
+    }
+    if let Err(message) = require_piped_input(io::stdin().is_terminal(), bin) {
+        eprintln!("{message}");
+        std::process::exit(2);
     }
 
     let highlight_keys: BTreeMap<&str, Highlight> = [
@@ -155,7 +174,7 @@ fn main() -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_cli_command, CliCommand};
+    use super::{parse_cli_command, require_piped_input, CliCommand};
 
     fn argv(parts: &[&str]) -> Vec<String> {
         parts.iter().map(|part| part.to_string()).collect()
@@ -188,5 +207,17 @@ mod tests {
     fn rejects_positional_argument() {
         let err = parse_cli_command(&argv(&["unjson", "file.txt"])).unwrap_err();
         assert!(err.contains("Unexpected argument: file.txt"));
+    }
+
+    #[test]
+    fn rejects_when_stdin_is_terminal() {
+        let err = require_piped_input(true, "unjson").unwrap_err();
+        assert!(err.contains("No input detected on stdin"));
+        assert!(err.contains("kubectl logs POD --tail 100 | unjson"));
+    }
+
+    #[test]
+    fn allows_when_stdin_is_piped() {
+        assert!(require_piped_input(false, "unjson").is_ok());
     }
 }
