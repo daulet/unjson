@@ -29,8 +29,8 @@ def render_formula(
         f"class {cls} < Formula\n"
         f'  desc "{description}"\n'
         f'  homepage "https://github.com/{repo}"\n'
-        '  license "MIT"\n'
         f'  version "{version}"\n'
+        '  license "MIT"\n'
         "\n"
         "  on_macos do\n"
         "    on_intel do\n"
