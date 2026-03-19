@@ -3,6 +3,10 @@ use std::{collections::BTreeMap, env::args, io};
 
 const SKIP_KEYS: [&str; 2] = ["timestamp", "level"];
 
+fn runtime_version() -> &'static str {
+    option_env!("UNJSON_VERSION_STRING").unwrap_or(env!("CARGO_PKG_VERSION"))
+}
+
 enum Highlight {
     Color(colored::Color),
     LogLevel,
@@ -91,8 +95,8 @@ fn walk_json(json: &serde_json::Value) -> BTreeMap<String, String> {
 }
 
 fn main() -> io::Result<()> {
-    if args().any(|arg| arg == "--version") {
-        println!("{}", env!("CARGO_PKG_VERSION"));
+    if args().any(|arg| arg == "--version" || arg == "-V") {
+        println!("{}", runtime_version());
         return Ok(());
     }
 
