@@ -1,4 +1,3 @@
-use colored;
 use colored::Colorize;
 use std::{collections::BTreeMap, env::args, io};
 

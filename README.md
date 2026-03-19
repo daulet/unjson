@@ -4,7 +4,7 @@
 kubectl logs $POD --tail 100 | unjson
 ```
 
-Install: `brew tap daulet/unjson && brew install unjson`
+Install: `brew install daulet/tap/unjson`
 
 ## k9s
 
